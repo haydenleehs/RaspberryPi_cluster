@@ -1,0 +1,4 @@
+swept 622545 designs, 253776 can fly, in 270.0 s using 4 rank(s) on 1 node(s)
+shortest take-off: (np.float64(11.25), np.float64(12.0), np.float64(5.75), 188, 454) (angle, camber, thick, roll m, range km)
+longest range:     (np.float64(6.0), np.float64(2.25), np.float64(4.0), 400, 1087)
+best all-rounder:  (np.float64(8.0), np.float64(3.5), np.float64(4.0), 290, 839)

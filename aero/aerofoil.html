@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Design an Aerofoil</title>
+<style>
+:root{--bg:#f4f6f9;--fg:#18222f;--mut:#5b6879;--card:#fff;--line:#d8dee6;--acc:#1f6feb;--good:#18955a;--bad:#d1433a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f141b;--fg:#e8edf3;--mut:#93a0b1;--card:#18202a;--line:#2b3644;--acc:#5c9dff;--good:#38c283;--bad:#ff6b60}}
+:root[data-theme="dark"]{--bg:#0f141b;--fg:#e8edf3;--mut:#93a0b1;--card:#18202a;--line:#2b3644;--acc:#5c9dff;--good:#38c283;--bad:#ff6b60}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:900px;margin:0 auto;padding:16px}
+h1{margin:4px 0 2px;font-size:24px}.sub{margin:0 0 14px;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.top{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.top{grid-template-columns:1fr}}
+canvas{width:100%;height:auto;display:block}
+label{display:flex;justify-content:space-between;font-weight:600;margin-top:10px}
+label span{color:var(--acc);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--acc)}
+.hint{color:var(--mut);font-size:12px;margin:0}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:12px 0}
+@media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.stat small{display:block;color:var(--mut)}.stat b{font-size:19px;font-variant-numeric:tabular-nums}
+.good{color:var(--good)}.bad{color:var(--bad)}
+#verdict{font-weight:600;margin:0 0 10px}
+button{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:10px 18px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:10px}
+</style></head><body><main>
+<h1>Design an Aerofoil</h1>
+<p class="sub">Shape the wing cross-section, then fly it. Can it take off from a 400 m runway, and how far does a full tank go?</p>
+<section class="top">
+<div class="card"><canvas id="fc" width="420" height="230"></canvas></div>
+<div class="card">
+<label>Angle of attack <span id="av"></span></label><input id="a" type="range" min="-5" max="25" step="0.25" value="5">
+<label>Curvature (camber) <span id="mv"></span></label><input id="m" type="range" min="0" max="12" step="0.25" value="3">
+<label>Thickness <span id="tv"></span></label><input id="t" type="range" min="4" max="30" step="0.25" value="12">
+<p class="hint" style="margin-top:10px">More angle and curvature mean more lift but more drag. Too much angle and the wing stalls.</p>
+</div></section>
+<section class="stats">
+<div class="stat"><small>Lift coeff. C<sub>L</sub></small><b id="scl"></b></div>
+<div class="stat"><small>Drag coeff. C<sub>D</sub></small><b id="scd"></b></div>
+<div class="stat"><small>Lift/drag</small><b id="sld"></b></div>
+<div class="stat"><small>Take-off roll</small><b id="sto"></b></div>
+<div class="stat"><small>Range, full tank</small><b id="srg"></b></div>
+</section>
+<p id="verdict"></p>
+<button id="fly">Fly this design ▶</button>
+<div class="card"><canvas id="sc" width="820" height="300"></canvas></div>
+<p class="hint" style="margin-top:10px">Simplified model: thin-aerofoil lift, parabolic drag polar, a 1,000 kg light aircraft with a 16 m² wing. It is for intuition, not for building real wings.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const S=16,Wt=9810,M0=1000,K=1/(Math.PI*6*.85),RUN=400,SC=1.4,GY=245;
+function aero(a,m,t){
+  const sl=.105*(1-.004*(t-12)),cmax=Math.max(.6,.9+.13*m+.012*(t-12)),as=cmax/sl-.9*m,st=a>as;
+  const cl=st?Math.max(.3,cmax-.09*(a-as)):sl*(a+.9*m);
+  const cd=.005+.0006*t+.0003*m+K*cl*cl+(st?.02+.012*(a-as):0)+.00002*a*a;
+  return{cl,cd,st};
+}
+function takeoff(a,m,t){
+  const{cl,cd}=aero(a,m,t);let v=0,x=0,tm=0;const tr=[[0,0,0]];
+  while(tm<40){
+    const q=.5*1.225*v*v*S,L=q*cl,D=q*cd,T=2600*(1-v/100);
+    const acc=(T-D-.04*Math.max(Wt-L,0))/M0;
+    v=Math.max(0,v+acc*.05);x+=v*.05;tm+=.05;tr.push([tm,x,v]);
+    if(x>RUN||(acc<=0&&v<1&&tm>1))return{ok:false,dist:x,tr};
+    if(L>=Wt)return{ok:true,dist:x,tr};
+  }
+  return{ok:false,dist:x,tr};
+}
+function cruise(a,m,t){
+  const{cl,cd}=aero(a,m,t);if(cl<=.1)return{ok:false,ld:0,range:0};
+  const V=Math.sqrt(2*Wt/(S*cl)),ld=cl/cd,ok=V<=90;
+  return{ok,ld,range:ok?Math.round(70*ld):0};
+}
+function foil(m,t,n=40){
+  const p=.4,M=m/100,T=t/100,u=[],l=[];
+  for(let i=0;i<=n;i++){
+    const x=(1-Math.cos(Math.PI*i/n))/2;
+    const yt=5*T*(.2969*Math.sqrt(x)-.126*x-.3516*x*x+.2843*x**3-.1015*x**4);
+    let yc,dy;
+    if(x<p){yc=M/(p*p)*(2*p*x-x*x);dy=2*M/(p*p)*(p-x)}
+    else{yc=M/((1-p)**2)*((1-2*p)+2*p*x-x*x);dy=2*M/((1-p)**2)*(p-x)}
+    const th=Math.atan(dy);
+    u.push([x-yt*Math.sin(th),yc+yt*Math.cos(th)]);l.push([x+yt*Math.sin(th),yc-yt*Math.cos(th)]);
+  }
+  return u.concat(l.reverse());
+}
+function drawFoil(c,cx,cy,ch,a,m,t,dir,fill,stroke){
+  c.save();c.translate(cx,cy);c.scale(dir,1);c.rotate(a*Math.PI/180);
+  c.beginPath();foil(m,t).forEach((p,i)=>{const X=(p[0]-.25)*ch,Y=-p[1]*ch;i?c.lineTo(X,Y):c.moveTo(X,Y)});
+  c.closePath();c.fillStyle=fill;c.fill();if(stroke){c.strokeStyle=stroke;c.lineWidth=1.5;c.stroke()}
+  c.restore();
+}
+const col=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function arrow(c,x,y,dx,dy,color){
+  c.strokeStyle=color;c.fillStyle=color;c.lineWidth=3;c.beginPath();c.moveTo(x,y);c.lineTo(x+dx,y+dy);c.stroke();
+  const an=Math.atan2(dy,dx);c.beginPath();c.moveTo(x+dx,y+dy);
+  c.lineTo(x+dx-9*Math.cos(an-.4),y+dy-9*Math.sin(an-.4));c.lineTo(x+dx-9*Math.cos(an+.4),y+dy-9*Math.sin(an+.4));c.fill();
+}
+function vals(){return[+$('a').value,+$('m').value,+$('t').value]}
+function update(){
+  const[a,m,t]=vals(),A=aero(a,m,t),tk=takeoff(a,m,t),cr=cruise(a,m,t);
+  $('av').textContent=a+"°";$('mv').textContent=m+"% chord";$('tv').textContent=t+"% chord";
+  $('scl').textContent=A.cl.toFixed(2)+(A.st?" ⚠":"");$('scd').textContent=A.cd.toFixed(3);
+  $('sld').textContent=(A.cl/A.cd).toFixed(1);
+  $('sto').innerHTML=tk.ok?tk.dist.toFixed(0)+" m":'<span class="bad">No lift-off</span>';
+  $('srg').innerHTML=cr.ok?cr.range+" km":'<span class="bad">—</span>';
+  let v;
+  if(A.st)v="Stalled: the airflow has separated and lift collapses. Reduce the angle.";
+  else if(!tk.ok)v="This wing can’t get off the runway. It needs more lift at low speed.";
+  else if(tk.dist<260&&cr.range>=900)v="All-rounder: short take-off and a long range.";
+  else if(tk.dist<260)v="Short-field specialist: gets airborne quickly but drinks fuel.";
+  else if(cr.range>=900)v="Long-range cruiser: efficient, but it needs most of the runway.";
+  else v="Average design. Try trading angle against curvature.";
+  $('verdict').textContent=v;
+  // aerofoil panel
+  const c=$('fc').getContext('2d');c.clearRect(0,0,420,230);
+  c.strokeStyle=col('--line');c.lineWidth=1;c.setLineDash([6,6]);
+  for(let y=40;y<=200;y+=40){c.beginPath();c.moveTo(10,y);c.lineTo(410,y);c.stroke()}
+  c.setLineDash([]);arrow(c,14,16,40,0,col('--mut'));c.fillStyle=col('--mut');c.font="12px system-ui";c.fillText("airflow",60,20);
+  drawFoil(c,200,118,290,a,m,t,1,col('--acc'),col('--fg'));
+  arrow(c,200,118,0,-Math.max(-60,Math.min(90,A.cl*55)),col('--good'));
+  arrow(c,200,118,Math.min(120,A.cd*900),0,col('--bad'));
+  c.fillStyle=col('--good');c.fillText("lift",206,Math.max(14,118-Math.max(0,Math.min(90,A.cl*55))-4));
+  c.fillStyle=col('--bad');c.fillText("drag",200+Math.min(120,A.cd*900)+6,114);
+}
+['a','m','t'].forEach(i=>$(i).addEventListener('input',update));
+// scene
+let s=null;const sc=$('sc').getContext('2d');
+function plane(c,x,y,pitch,m,t,a,tick){
+  c.save();c.translate(x,y);c.rotate(pitch);
+  c.fillStyle="#cfd8e3";c.beginPath();c.ellipse(0,0,38,9,0,0,7);c.fill();
+  c.beginPath();c.moveTo(-30,-4);c.lineTo(-44,-24);c.lineTo(-34,-24);c.lineTo(-16,-4);c.fill();
+  c.fillStyle="#3b6fb6";c.beginPath();c.ellipse(14,-3,8,4,0,0,7);c.fill();
+  drawFoil(c,2,4,40,a,m,t,-1,"#e0453a","#7a1f19");
+  c.strokeStyle="#333";c.lineWidth=3;c.beginPath();const p=Math.sin(tick*30)*13;c.moveTo(40,-p);c.lineTo(40,p);c.stroke();
+  c.fillStyle="#333";c.fillRect(-12,9,3,7);c.fillRect(14,9,3,7);c.beginPath();c.arc(-10,18,4,0,7);c.arc(15,18,4,0,7);c.fill();
+  c.restore();
+}
+function render(){
+  const c=sc,X=s.X,cam=Math.max(0,X-520);
+  const g=c.createLinearGradient(0,0,0,GY);g.addColorStop(0,"#5aa7e8");g.addColorStop(1,"#cfe8fb");c.fillStyle=g;c.fillRect(0,0,820,300);
+  c.fillStyle="rgba(255,255,255,.85)";
+  for(let i=0;i<8;i++){const cx=((i*260-cam*.5)%2080+2080)%2080-200,cy=50+(i*47%110);c.beginPath();c.ellipse(cx,cy,46,14,0,0,7);c.ellipse(cx+26,cy-8,30,12,0,0,7);c.fill()}
+  c.fillStyle="#5a9e48";c.fillRect(0,GY,820,60);
+  c.fillStyle="#4b8a3b";for(let i=0;i<40;i++){const gx=((i*90-cam)%3600+3600)%3600-100;c.fillRect(gx,GY+30+(i%3)*10,40,3)}
+  const rx=60-cam,rw=RUN*SC;c.fillStyle="#44484f";c.fillRect(rx,GY,rw,16);
+  c.fillStyle="#fff";for(let i=0;i<rw;i+=40)c.fillRect(rx+i+8,GY+7,22,2);
+  c.fillStyle="#e0453a";c.fillRect(rx+rw,GY-14,4,30);c.fillRect(rx-4,GY-4,4,20);
+  let pitch=0;if(s.ph==="climb")pitch=-.14;if(s.ph==="glide")pitch=.08;
+  plane(c,X-cam,GY-18-s.alt+(s.ph==="over"?0:0),pitch,s.m,s.t,s.a,s.clock);
+  c.fillStyle="#10202f";c.font="600 15px system-ui";c.fillText(s.msg,14,26);
+  if(s.ph==="cruise"||s.ph==="glide"||s.ph==="done"&&s.tk.ok){
+    const f=s.frac;c.fillText("Fuel",640,26);c.strokeStyle="#10202f";c.strokeRect(676,12,130,16);
+    c.fillStyle=f<.8?"#18955a":"#d1433a";c.fillRect(678,14,126*(1-f),12);
+    c.fillStyle="#10202f";c.fillText((s.cr.range*f).toFixed(0)+" km flown",14,48);
+  }
+}
+let last=0;
+function loop(now){
+  const dt=Math.max(0,Math.min(.05,(now-last)/1000));last=now;s.clock+=dt;
+  if(s.ph==="roll"){
+    s.tm+=dt*2;const tr=s.tk.tr,i=Math.max(0,Math.min(tr.length-1,Math.floor(s.tm/.05)));
+    s.X=60+tr[i][1]*SC;s.v=tr[i][2];
+    if(i>=tr.length-1){if(s.tk.ok){s.ph="climb";s.ct=0;s.msg="Lift-off!"}else{s.ph="over";s.msg="No lift… runway ending!"}}
+  }else if(s.ph==="climb"){
+    s.ct+=dt;s.X+=Math.max(s.v*SC,120)*dt;s.alt=Math.min(90,s.ct*45);
+    if(s.ct>2){s.ph="cruise";s.tc=0;s.msg="Cruising on a full tank"}
+  }else if(s.ph==="cruise"){
+    s.tc+=dt;s.X+=170*dt;s.frac=Math.min(1,s.tc/10);
+    if(s.frac>=1||!s.cr.ok){s.ph="glide";s.gt=0;s.msg=s.cr.ok?"Out of fuel!":"Can’t hold level flight at this setting"}
+  }else if(s.ph==="glide"){
+    s.gt+=dt;s.alt=90*(1-s.gt/3);s.X+=130*dt;
+    if(s.gt>=3){s.alt=0;s.ph="done";s.msg=s.cr.ok?"Landed after "+s.cr.range+" km on a full tank.":s.msg}
+  }else if(s.ph==="over"){
+    s.v*=Math.exp(-1.2*dt);s.X+=s.v*SC*dt;
+    if(s.v<1){s.ph="done";s.msg="Ran out of runway: no take-off. Try more angle or curvature."}
+  }
+  render();if(s.ph!=="done")requestAnimationFrame(loop);else $('fly').disabled=false;
+}
+$('fly').onclick=()=>{
+  const[a,m,t]=vals();$('fly').disabled=true;
+  s={a,m,t,tk:takeoff(a,m,t),cr:cruise(a,m,t),ph:"roll",tm:0,X:60,alt:0,v:0,tc:0,frac:0,clock:0,msg:"Rolling…"};
+  last=performance.now();requestAnimationFrame(loop);
+};
+s={a:5,m:3,t:12,tk:takeoff(5,3,12),cr:cruise(5,3,12),ph:"idle",X:60,alt:0,frac:0,clock:0,msg:"Press “Fly this design” to test it"};
+update();render();
+</script></body></html>
