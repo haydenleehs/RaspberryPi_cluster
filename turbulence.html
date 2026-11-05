@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pi Supercomputer: Wing Storm Simulator</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0b1120; color: #f8fafc; margin: 0; padding: 18px; }
+  .header { max-width: 1220px; margin: 0 auto 14px auto; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { margin: 0; font-size: 24px; color: #38bdf8; }
+  .header span { font-size: 14px; color: #94a3b8; }
+  .grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 20px; max-width: 1220px; margin: auto; }
+  .card { background: #1e293b; padding: 20px; border-radius: 14px; box-shadow: 0 8px 25px rgba(0,0,0,0.4); border: 1px solid #334155; }
+  h2 { margin-top: 0; font-size: 19px; color: #f8fafc; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+  canvas { background: linear-gradient(180deg, #020617 0%, #0f172a 100%); border-radius: 10px; width: 100%; height: 240px; display: block; margin-bottom: 12px; border: 1px solid #334155; }
+  .slider-row { margin: 11px 0; background: #0f172a; padding: 8px 12px; border-radius: 8px; }
+  .slider-row label { display: flex; justify-content: space-between; font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .slider-hint { font-size: 12px; color: #94a3b8; font-weight: normal; }
+  input[type=range] { width: 100%; accent-color: #38bdf8; cursor: pointer; }
+  .btn-group { display: flex; gap: 12px; margin-top: 14px; }
+  button { flex: 1; padding: 14px 10px; font-size: 15px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; transition: 0.15s; }
+  .btn-4 { background: #f59e0b; color: #0f172a; }
+  .btn-16 { background: #10b981; color: #0f172a; }
+  button:hover { filter: brightness(1.1); transform: translateY(-2px); }
+  .status-banner { padding: 11px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 14px; margin-top: 10px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0; text-align: center; }
+  .stat-box { background: #0f172a; padding: 12px 8px; border-radius: 10px; border: 1px solid #334155; }
+  .stat-title { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+  .stat-val { font-size: 22px; font-weight: 800; }
+  .bar-container { margin: 18px 0; background: #0f172a; padding: 14px; border-radius: 10px; border: 1px solid #334155; }
+  .stacked-bar { display: flex; height: 34px; width: 100%; border-radius: 8px; overflow: hidden; background: #334155; margin: 10px 0; font-weight: bold; font-size: 13px; color: #000; }
+  .bar-seg { display: flex; align-items: center; justify-content: center; transition: width 0.5s ease; overflow: hidden; white-space: nowrap; }
+  .legend { display: flex; justify-content: space-between; font-size: 12px; color: #cbd5e1; }
+  .queue-box { font-family: monospace; background: #020617; padding: 10px 12px; border-radius: 8px; color: #38bdf8; font-size: 13px; border: 1px solid #1e3a8a; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+  th, td { padding: 8px 6px; border-bottom: 1px solid #334155; text-align: left; }
+  th { color: #94a3b8; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>✈️ Raspberry Pi Supercomputer: Wing Storm Simulator</h1>
+  <span>Live Monte Carlo Weather Testing across 16 CPU Cores</span>
+</div>
+
+<div class="grid">
+  <!-- Left Column: Live Wind Tunnel & Sliders -->
+  <div class="card">
+    <h2>1. Design Your Wing & Set the Weather</h2>
+    <canvas id="wingCanvas" width="560" height="240"></canvas>
+
+    <div class="slider-row">
+      <label>
+        <span>Wing Tilt (Angle of Attack) <span class="slider-hint">— steep tilt = more lift, but stalls!</span></span>
+        <span id="valAngle" style="color:#38bdf8">8.0°</span>
+      </label>
+      <input type="range" id="angle" min="0" max="16" step="0.5" value="8.0">
+    </div>
+
+    <div class="slider-row">
+      <label>
+        <span>Wing Curve (Camber) <span class="slider-hint">— flat (0%) vs curved airliner wing</span></span>
+        <span id="valCamber" style="color:#38bdf8">4.0%</span>
+      </label>
+      <input type="range" id="camber" min="0" max="9" step="0.5" value="4.0">
+    </div>
+
+    <div class="slider-row">
+      <label>
+        <span>Wing Thickness <span class="slider-hint">— thicker wings resist stalling better</span></span>
+        <span id="valThick" style="color:#38bdf8">12.0%</span>
+      </label>
+      <input type="range" id="thick" min="6" max="18" step="0.5" value="12.0">
+    </div>
+
+    <div class="slider-row" style="border: 1px solid #f59e0b;">
+      <label>
+        <span>⛈️ Storminess (Turbulence Intensity) <span class="slider-hint">— watch the wind tunnel!</span></span>
+        <span id="valTurb" style="color:#fbbf24">3.0 (Medium Storm)</span>
+      </label>
+      <input type="range" id="turb" min="0.5" max="6.0" step="0.5" value="3.0" style="accent-color:#f59e0b;">
+    </div>
+
+    <div class="slider-row">
+      <label>
+        <span>🎲 Random Gusts to Test (Monte Carlo) <span class="slider-hint">— more gusts = higher accuracy</span></span>
+        <span id="valSamples" style="color:#a7f3d0">40,000,000</span>
+      </label>
+      <input type="range" id="samples" min="10000000" max="120000000" step="10000000" value="40000000" style="accent-color:#10b981;">
+    </div>
+
+    <div id="idealStatus" class="status-banner"></div>
+
+    <div class="btn-group">
+      <button class="btn-4" onclick="submitJob(4)">🐢 Run on 1 Pi (4 Cores)</button>
+      <button class="btn-16" onclick="submitJob(16)">🚀 Run on Full Cluster (16 Cores)</button>
+    </div>
+  </div>
+
+  <!-- Right Column: Easy-to-Read Cluster Results -->
+  <div class="card">
+    <h2>2. Supercomputer Storm Test Results</h2>
+    <div class="queue-box" id="squeueBox">Cluster Status: Idle (LED bars flat)</div>
+
+    <!-- 4 Clear Numbers that explain 100% of outcomes -->
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-title">🟢 Safe Flight</div>
+        <div class="stat-val" id="resSafe" style="color:#4ade80;">--%</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">🟡 Sinking (Low Lift)</div>
+        <div class="stat-val" id="resSink" style="color:#facc15;">--%</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">🔴 Wing Stall (Crash)</div>
+        <div class="stat-val" id="resStall" style="color:#f87171;">--%</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">⏱️ Compute Time</div>
+        <div class="stat-val" id="resTime" style="color:#38bdf8;">-- s</div>
+      </div>
+    </div>
+
+    <!-- Visual 100% Breakdown Bar -->
+    <div class="bar-container">
+      <div style="font-weight:bold; font-size:14px; display:flex; justify-content:space-between;">
+        <span>100% Breakdown of All Simulated Wind Gusts:</span>
+        <span id="totalCheck" style="color:#94a3b8;">Total = 100.0%</span>
+      </div>
+      <div class="stacked-bar">
+        <div id="barSafe" class="bar-seg" style="width:100%; background:#4ade80;">Waiting for test...</div>
+        <div id="barSink" class="bar-seg" style="width:0%; background:#facc15;"></div>
+        <div id="barStall" class="bar-seg" style="width:0%; background:#f87171;"></div>
+      </div>
+      <div class="legend">
+        <span>🟢 <b>Safe:</b> Enough lift & smooth airflow</span>
+        <span>🟡 <b>Sinking:</b> Wind too slow to hold plane up</span>
+        <span>🔴 <b>Stalled:</b> Gust tilted wing past stall limit</span>
+      </div>
+    </div>
+
+    <div style="font-weight:bold; font-size:14px; margin-top:16px;">⚡ Parallel Speedup Comparison (1 Pi vs. 4 Pis):</div>
+    <table>
+      <thead>
+        <tr><th>Cluster Mode</th><th>Gusts Tested</th><th>Safe %</th><th>Time Taken</th><th>Speedup</th></tr>
+      </thead>
+      <tbody id="logTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('wingCanvas');
+const ctx = canvas.getContext('2d');
+let baseline4Time = null;
+let lastCompletedTime = null;
+
+// Create 85 live wind particles for the interactive wind tunnel
+const particles = Array.from({length: 85}, () => ({
+  x: Math.random() * canvas.width,
+  y: Math.random() * canvas.height,
+  speed: 3 + Math.random() * 2,
+  phase: Math.random() * Math.PI * 2
+}));
+
+function getTurbLabel(t) {
+  if (t <= 1.0) return t.toFixed(1) + " (Calm Breeze)";
+  if (t <= 2.5) return t.toFixed(1) + " (Bumpy Clouds)";
+  if (t <= 4.0) return t.toFixed(1) + " (Heavy Storm)";
+  return t.toFixed(1) + " (Extreme Hurricane!)";
+}
+
+function animateWindTunnel() {
+  const angle = parseFloat(document.getElementById('angle').value);
+  const camber = parseFloat(document.getElementById('camber').value);
+  const thick = parseFloat(document.getElementById('thick').value);
+  const turb = parseFloat(document.getElementById('turb').value);
+  const samples = parseInt(document.getElementById('samples').value);
+
+  document.getElementById('valAngle').innerText = angle.toFixed(1) + '°';
+  document.getElementById('valCamber').innerText = camber.toFixed(1) + '%';
+  document.getElementById('valThick').innerText = thick.toFixed(1) + '%';
+  document.getElementById('valTurb').innerText = getTurbLabel(turb);
+  document.getElementById('valSamples').innerText = samples.toLocaleString();
+
+  const stallLimit = 14.5 - 0.12 * camber + 0.15 * (thick - 10.0);
+  const isCalmStalled = angle > stallLimit;
+
+  // Update calm-air status banner
+  const banner = document.getElementById('idealStatus');
+  if (isCalmStalled) {
+    banner.style.background = '#450a0a';
+    banner.style.color = '#fca5a5';
+    banner.innerText = `⚠️ DANGER: Wing is tilted past ${stallLimit.toFixed(1)}°! It stalls even in calm air!`;
+  } else {
+    banner.style.background = '#064e3b';
+    banner.style.color = '#6ee7b7';
+    banner.innerText = `✅ Calm Air Check: Wing is SAFE (Stalls at ${stallLimit.toFixed(1)}°). Click below to test it in a Level ${turb.toFixed(1)} Storm!`;
+  }
+
+  // Clear canvas (occasional lightning flash at high turbulence!)
+  if (turb >= 4.5 && Math.random() < 0.015) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Calculate live turbulent gust shaking the wing
+  const time = performance.now() * 0.008;
+  const liveGustAngle = Math.sin(time * 1.7) * Math.cos(time * 0.9) * (turb * 1.1);
+  const effectiveAngle = angle + liveGustAngle;
+  const momentaryStall = effectiveAngle > stallLimit;
+
+  // Draw live flowing wind particles
+  particles.forEach(p => {
+    p.x += p.speed + turb * 0.9;
+    // Vertical chaos increases dramatically with Storminess slider!
+    const wy = Math.sin(p.x * 0.025 + p.phase + time) * (turb * 5.5);
+    let drawY = p.y + wy;
+
+    // Deflect particles around the wing in the center
+    const dx = p.x - 280;
+    const dy = drawY - 120;
+    if (Math.abs(dx) < 130 && Math.abs(dy) < 45) {
+      drawY += (dy < 0 ? -18 : 18) * (1 - Math.abs(dx)/130);
+    }
+
+    if (p.x > canvas.width) {
+      p.x = -20;
+      p.y = Math.random() * canvas.height;
+    }
+
+    ctx.beginPath();
+    const tailLen = 14 + turb * 4;
+    ctx.moveTo(p.x, drawY);
+    ctx.lineTo(p.x - tailLen, drawY - wy * 0.25);
+    ctx.strokeStyle = momentaryStall ? 'rgba(248, 113, 113, 0.75)' :
+                      (turb > 3.5 ? 'rgba(251, 191, 36, 0.7)' : 'rgba(56, 189, 248, 0.65)');
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+
+  // Draw the Wing (shakes with turbulence and turns red when a gust stalls it)
+  ctx.save();
+  const shakeY = (Math.random() - 0.5) * turb * 1.8;
+  ctx.translate(280, 125 + shakeY);
+  ctx.rotate(-effectiveAngle * Math.PI / 180);
+
+  ctx.beginPath();
+  const chord = 250;
+  for (let i = 0; i <= 60; i++) {
+    const x = i / 60;
+    const yt = 5 * (thick / 100) * (0.2969*Math.sqrt(x) - 0.1260*x - 0.3516*x*x + 0.2843*x*x*x - 0.1015*x*x*x*x);
+    const yc = (camber / 100) * (x < 0.4 ? (x / 0.16) * (0.8 - x) : ((1 - x) / 0.36) * (0.2 + x));
+    const px = (x - 0.5) * chord;
+    const py = -(yc + yt) * chord;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  for (let i = 60; i >= 0; i--) {
+    const x = i / 60;
+    const yt = 5 * (thick / 100) * (0.2969*Math.sqrt(x) - 0.1260*x - 0.3516*x*x + 0.2843*x*x*x - 0.1015*x*x*x*x);
+    const yc = (camber / 100) * (x < 0.4 ? (x / 0.16) * (0.8 - x) : ((1 - x) / 0.36) * (0.2 + x));
+    const px = (x - 0.5) * chord;
+    const py = -(yc - yt) * chord;
+    ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = momentaryStall ? '#ef4444' : '#38bdf8';
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#f8fafc';
+  ctx.stroke();
+  ctx.restore();
+
+  // HUD text inside canvas
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '12px sans-serif';
+  ctx.fillText(`Live Gust Angle: ${effectiveAngle.toFixed(1)}° (Stall Limit: ${stallLimit.toFixed(1)}°)`, 12, 22);
+  if (momentaryStall) {
+    ctx.fillStyle = '#f87171';
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText('⚡ GUST STALL DETECTED!', 380, 22);
+  }
+
+  requestAnimationFrame(animateWindTunnel);
+}
+
+async function submitJob(ranks) {
+  const angle = document.getElementById('angle').value;
+  const camber = document.getElementById('camber').value;
+  const thick = document.getElementById('thick').value;
+  const turb = document.getElementById('turb').value;
+  const samples = document.getElementById('samples').value;
+
+  document.getElementById('squeueBox').innerText = `🚀 Dispatching ${ranks}-Core MPI job to SLURM... Watch the Pi LEDs!`;
+  await fetch(`/submit?angle=${angle}&camber=${camber}&thick=${thick}&turb=${turb}&samples=${samples}&ranks=${ranks}`);
+}
+
+async function pollStatus() {
+  try {
+    const res = await fetch('/status');
+    const data = await res.json();
+    document.getElementById('squeueBox').innerText = data.squeue
+      ? `⚙️ RUNNING ON CLUSTER: ${data.squeue}`
+      : `Cluster Status: Idle (0 jobs in queue — LED bars flat)`;
+
+    if (data.status === 'complete' && data.wall_time !== lastCompletedTime) {
+      lastCompletedTime = data.wall_time;
+
+      // Make sure the 3 mutually-exclusive categories add up to exactly 100.0%
+      const stallPct = data.stall_pct;
+      const sinkPct  = Math.max(0, data.drop_pct - data.stall_pct);
+      const safePct  = Math.max(0, 100.0 - stallPct - sinkPct);
+
+      document.getElementById('resSafe').innerText  = safePct.toFixed(1) + '%';
+      document.getElementById('resSink').innerText  = sinkPct.toFixed(1) + '%';
+      document.getElementById('resStall').innerText = stallPct.toFixed(1) + '%';
+      document.getElementById('resTime').innerText  = data.wall_time + ' s';
+
+      document.getElementById('barSafe').style.width  = safePct + '%';
+      document.getElementById('barSafe').innerText    = safePct > 10 ? `Safe ${safePct.toFixed(1)}%` : '';
+      document.getElementById('barSink').style.width  = sinkPct + '%';
+      document.getElementById('barSink').innerText    = sinkPct > 8 ? `Sink ${sinkPct.toFixed(1)}%` : '';
+      document.getElementById('barStall').style.width = stallPct + '%';
+      document.getElementById('barStall').innerText   = stallPct > 8 ? `Stall ${stallPct.toFixed(1)}%` : '';
+
+      document.getElementById('totalCheck').innerText =
+        `${safePct.toFixed(1)}% + ${sinkPct.toFixed(1)}% + ${stallPct.toFixed(1)}% = 100.0%`;
+
+      if (data.ranks === 4) baseline4Time = data.wall_time;
+      let speedup = '--';
+      if (data.ranks === 16 && baseline4Time) {
+        speedup = (baseline4Time / data.wall_time).toFixed(2) + 'x FASTER!';
+      } else if (data.ranks === 4) {
+        speedup = '1.0x (1 Pi Baseline)';
+      }
+
+      const row = `<tr>
+        <td><b>${data.ranks} Cores</b> (${data.nodes} Pi${data.nodes>1?'s':''})</td>
+        <td>${data.samples.toLocaleString()}</td>
+        <td style="color:#4ade80;font-weight:bold;">${safePct.toFixed(1)}%</td>
+        <td><b>${data.wall_time} s</b></td>
+        <td style="color:#38bdf8;font-weight:bold;">${speedup}</td>
+      </tr>`;
+      document.getElementById('logTable').insertAdjacentHTML('afterbegin', row);
+    }
+  } catch (e) {}
+}
+
+requestAnimationFrame(animateWindTunnel);
+setInterval(pollStatus, 600);
+</script>
+</body>
+</html>
