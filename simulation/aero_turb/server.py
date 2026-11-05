@@ -6,7 +6,7 @@ import subprocess
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
 
-os.chdir("/clusterfs/simulation/aero_turb")
+os.chdir("/clusterfs/aero_turb")
 
 class ClusterHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -25,7 +25,7 @@ class ClusterHandler(SimpleHTTPRequestHandler):
             label   = f"{ranks}-Cores"
 
             # Mark status as running
-            with open("/clusterfs/simulation/aero_turb/mc_results.json", "w") as f:
+            with open("/clusterfs/aero_turb/mc_results.json", "w") as f:
                 json.dump({"status": "running", "ranks": ranks, "nodes": nodes}, f)
 
             cmd = [
@@ -33,7 +33,7 @@ class ClusterHandler(SimpleHTTPRequestHandler):
                 f"--job-name=mc{ranks}",
                 f"--nodes={nodes}",
                 f"--ntasks={ranks}",
-                "/clusterfs/simulation/aero_turb/turbulence.sh",
+                "/clusterfs/aero_turb/turbulence.sh",
                 angle, camber, thick, turb, samples, label
             ]
             out = subprocess.check_output(cmd).decode("utf-8").strip()
@@ -44,9 +44,9 @@ class ClusterHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/status":
             squeue = subprocess.check_output(["squeue", "-h", "-o", "%i %j %T %M %N"]).decode("utf-8").strip()
             res = {"status": "idle"}
-            if os.path.exists("/clusterfs/simulation/aero_turb/mc_results.json"):
+            if os.path.exists("/clusterfs/aero_turb/mc_results.json"):
                 try:
-                    with open("/clusterfs/simulation/aero_turb/mc_results.json") as f:
+                    with open("/clusterfs/aero_turb/mc_results.json") as f:
                         res = json.load(f)
                 except Exception:
                     pass

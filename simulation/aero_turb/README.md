@@ -161,15 +161,15 @@ once you have run both.
 
 ```bash
 # On picluster-login
-python3 /clusterfs/simulation/aero_turb/server.py
+python3 /clusterfs/aero_turb/server.py
 # then open http://10.0.0.1:8000/turbulence.html
 ```
 
 To submit a job by hand, without the UI:
 
 ```bash
-sbatch --nodes=4 --ntasks=16 /clusterfs/simulation/aero_turb/turbulence.sh 8.0 4.0 12.0 3.0 40000000 manual
-cat /clusterfs/simulation/aero_turb/mc_results.json
+sbatch --nodes=4 --ntasks=16 /clusterfs/aero_turb/turbulence.sh 8.0 4.0 12.0 3.0 40000000 manual
+cat /clusterfs/aero_turb/mc_results.json
 ```
 
 Arguments are positional: `angle camber thickness turbulence samples label`.

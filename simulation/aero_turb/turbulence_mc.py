@@ -126,7 +126,7 @@ if rank == 0:
         "bins": [round(x, 2) for x in hist_bins[:-1]]
     }
     
-    with open("/clusterfs/simulation/aero_turb/mc_results.json", "w") as f:
+    with open("/clusterfs/aero_turb/mc_results.json", "w") as f:
         json.dump(result, f)
         
     print(f"[{job_label}] Survival: {survival_pct:.2f}% | Stall Risk: {stall_pct:.2f}% | "

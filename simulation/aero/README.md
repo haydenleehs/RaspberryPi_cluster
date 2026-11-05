@@ -172,7 +172,7 @@ The scripts expect the same setup as the other demos in this repo:
 - A **SLURM** cluster with a partition called `cluster` (a login node plus 4
   compute Pis, 4 cores each).
 - A **shared NFS folder at `/clusterfs`**, mounted at the same path on every node.
-  The scripts use the absolute path `/clusterfs/simulation/aero`.
+  The scripts use the absolute path `/clusterfs/aero`.
 - **OpenMPI**, **Python 3**, **NumPy** and **mpi4py** installed on **every
   compute node**.
 
@@ -190,12 +190,12 @@ srun --nodes=4 --ntasks=16 python3 -c "from mpi4py import MPI; print(MPI.COMM_WO
 
 You should see ranks 0–15 spread over 4 hostnames.
 
-### 2. Put the files in `/clusterfs/simulation/aero`
+### 2. Put the files in `/clusterfs/aero`
 
 If you're setting up from GitHub on a new cluster:
 
 ```bash
-git clone https://github.com/haydenleehs/RaspberryPi_cluster.git /tmp/rpc && cp -r /tmp/rpc/simulation /clusterfs/
+git clone https://github.com/haydenleehs/RaspberryPi_cluster.git /tmp/rpc && cp -r /tmp/rpc/simulation/aero /clusterfs/
 ```
 
 ### 3. Run the sweep
@@ -203,13 +203,13 @@ git clone https://github.com/haydenleehs/RaspberryPi_cluster.git /tmp/rpc && cp 
 Run it on one Pi (4 cores):
 
 ```bash
-sbatch --job-name=aero-4 --nodes=1 --ntasks=4 /clusterfs/simulation/aero/aero.sh
+sbatch --job-name=aero-4 --nodes=1 --ntasks=4 /clusterfs/aero/aero.sh
 ```
 
 Then on all four Pis (16 cores):
 
 ```bash
-sbatch --job-name=aero-16 --nodes=4 --ntasks=16 /clusterfs/simulation/aero/aero.sh
+sbatch --job-name=aero-16 --nodes=4 --ntasks=16 /clusterfs/aero/aero.sh
 ```
 
 Watch the queue, then read the log once the job finishes. `<jobid>` is the
@@ -220,16 +220,16 @@ squeue
 ```
 
 ```bash
-cat /clusterfs/simulation/aero/aero-16-<jobid>.out
+cat /clusterfs/aero/aero-16-<jobid>.out
 ```
 
 The log is named `<job-name>-<jobid>.out`, and the full results go to
-`/clusterfs/simulation/aero/results.json`.
+`/clusterfs/aero/results.json`.
 
 To run without SLURM (for example, a quick test on one Pi):
 
 ```bash
-cd /clusterfs/simulation/aero && mpirun -n 4 python3 aero_sweep.py 1
+cd /clusterfs/aero && mpirun -n 4 python3 aero_sweep.py 1
 ```
 
 The number at the end is the **refinement**. `1` uses steps of 0.25. `2` halves
@@ -243,7 +243,7 @@ The pages run entirely in the browser, so you can just double-click
 other devices on the network:
 
 ```bash
-cd /clusterfs/simulation/aero && python3 -m http.server 8000
+cd /clusterfs/aero && python3 -m http.server 8000
 ```
 
 Then open `http://<login-node-ip>:8000/aerofoil_simulator.html` (for example

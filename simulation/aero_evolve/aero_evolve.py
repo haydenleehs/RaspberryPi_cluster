@@ -11,7 +11,7 @@ S, Wt, M0, RUN = 16, 9810, 1000, 400
 K = 1 / (math.pi * 6 * .85)
 LO, HI, SIG = np.array([-5, 0, 4.]), np.array([25, 12, 30.]), np.array([1.5, .8, 1.5])
 W = 0.5                      # fitness weight: range vs short take-off
-OUT = "/clusterfs/simulation/aero_evolve/best.json"
+OUT = "/clusterfs/aero_evolve/best.json"
 
 def aero(a, m, t):
     sl = .105 * (1 - .004 * (t - 12))

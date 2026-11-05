@@ -142,7 +142,7 @@ The same setup as the other demos in this repo:
 
 - A **SLURM** cluster with a partition called `cluster`.
 - A **shared NFS folder at `/clusterfs`** on every node. The scripts use the
-  absolute path `/clusterfs/simulation/aero_evolve`.
+  absolute path `/clusterfs/aero_evolve`.
 - **OpenMPI**, **Python 3**, **NumPy** and **mpi4py** on every compute node:
 
 ```bash
@@ -155,7 +155,7 @@ sudo apt update && sudo apt install -y openmpi-bin python3-numpy python3-mpi4py
 HTTP. Double-clicking the file won't work. On the login node:
 
 ```bash
-cd /clusterfs/simulation/aero_evolve && python3 -m http.server 8000
+cd /clusterfs/aero_evolve && python3 -m http.server 8000
 ```
 
 Open `http://<login-node-ip>:8000/evolve.html` (for example
@@ -167,19 +167,19 @@ until a job starts.
 In a second terminal, run it on all four Pis (16 cores):
 
 ```bash
-sbatch --job-name=evo-16 --nodes=4 --ntasks=16 /clusterfs/simulation/aero_evolve/evolve.sh
+sbatch --job-name=evo-16 --nodes=4 --ntasks=16 /clusterfs/aero_evolve/evolve.sh
 ```
 
 Or on one Pi (4 cores), to compare the time:
 
 ```bash
-sbatch --job-name=evo-4 --nodes=1 --ntasks=4 /clusterfs/simulation/aero_evolve/evolve.sh
+sbatch --job-name=evo-4 --nodes=1 --ntasks=4 /clusterfs/aero_evolve/evolve.sh
 ```
 
 Read the summary when it finishes (`<jobid>` is the number `sbatch` printed):
 
 ```bash
-cat /clusterfs/simulation/aero_evolve/evo-16-<jobid>.out
+cat /clusterfs/aero_evolve/evo-16-<jobid>.out
 ```
 
 ### Slowing it down for a live demo
@@ -189,7 +189,7 @@ At full speed the run finishes in about 24 s, which is quick to watch. The
 web page has time to animate:
 
 ```bash
-sbatch --export=ALL,PACE=1 --job-name=evo-16 --nodes=4 --ntasks=16 /clusterfs/simulation/aero_evolve/evolve.sh
+sbatch --export=ALL,PACE=1 --job-name=evo-16 --nodes=4 --ntasks=16 /clusterfs/aero_evolve/evolve.sh
 ```
 
 With `PACE=1`, the 30 generations take about 30 s or more. Use `PACE=0` (the
@@ -198,7 +198,7 @@ default) when you're timing 4 cores against 16.
 ### Running by hand
 
 ```bash
-cd /clusterfs/simulation/aero_evolve && mpirun -n 4 python3 aero_evolve.py 0 2400 30
+cd /clusterfs/aero_evolve && mpirun -n 4 python3 aero_evolve.py 0 2400 30
 ```
 
 The arguments are, in order: `pace_s`, `total_pop` and `generations`.
