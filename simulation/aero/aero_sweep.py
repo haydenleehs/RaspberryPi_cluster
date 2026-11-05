@@ -69,7 +69,7 @@ if rank == 0:
     json.dump({"designs": len(designs), "flyable": len(rows), "pareto": pareto,
                "sample": rows[::max(1, len(rows) // 2000)],
                "shortest": rows[0], "longest": max(rows, key=lambda r: r[4]),
-               "allrounder": allround}, open("/clusterfs/aero/results.json", "w"))
+               "allrounder": allround}, open("/clusterfs/simulation/aero/results.json", "w"))
     print(f"swept {len(designs)} designs, {len(rows)} can fly, in {wall:.1f} s "
           f"using {size} rank(s) on {len(set(names))} node(s)")
     print("shortest take-off:", rows[0], "(angle, camber, thick, roll m, range km)")

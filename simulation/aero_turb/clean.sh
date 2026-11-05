@@ -1,6 +1,6 @@
 #!/bin/bash
 # Remove Slurm output files (mc-*.out) and the results JSON from previous runs.
-cd /clusterfs/aero_turb || exit 1
+cd /clusterfs/simulation/aero_turb || exit 1
 
 shopt -s nullglob
 files=(mc-*.out mc_results.json)
