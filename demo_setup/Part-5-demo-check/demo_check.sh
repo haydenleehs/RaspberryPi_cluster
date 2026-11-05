@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # picluster — automated pre-demo check (run on picluster-login)
-# Mirrors demoCheck/README.md steps 1–5 plus the troubleshooting checks.
+# See demo_setup/Part-5-demo-check/README.md for what each check does.
 #
 # Usage:  ./demo_check.sh            # check only
 #         ./demo_check.sh --fix      # check + attempt the README's fixes
