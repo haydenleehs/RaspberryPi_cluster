@@ -1,0 +1,2 @@
+picluster-node02 slots=4
+picluster-node03 slots=4

@@ -1,0 +1,2 @@
+host=picluster-node01  ranks=1
+pi ~= 3.141420, computed in 11.9 s (6.9 s compute + 5.0 s serial) using 1 rank(s) on 1 node(s)

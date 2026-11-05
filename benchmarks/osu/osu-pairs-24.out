@@ -1,0 +1,36 @@
+===== picluster-node01 <-> picluster-node02 =====
+
+# OSU MPI Bandwidth Test v7.5
+# Datatype: MPI_CHAR.
+# Size      Bandwidth (MB/s)
+1048576               117.27
+===== picluster-node01 <-> picluster-node03 =====
+
+# OSU MPI Bandwidth Test v7.5
+# Datatype: MPI_CHAR.
+# Size      Bandwidth (MB/s)
+1048576               117.29
+===== picluster-node01 <-> picluster-node04 =====
+
+# OSU MPI Bandwidth Test v7.5
+# Datatype: MPI_CHAR.
+# Size      Bandwidth (MB/s)
+1048576               117.30
+===== picluster-node02 <-> picluster-node03 =====
+
+# OSU MPI Bandwidth Test v7.5
+# Datatype: MPI_CHAR.
+# Size      Bandwidth (MB/s)
+1048576               117.26
+===== picluster-node02 <-> picluster-node04 =====
+
+# OSU MPI Bandwidth Test v7.5
+# Datatype: MPI_CHAR.
+# Size      Bandwidth (MB/s)
+1048576               117.27
+===== picluster-node03 <-> picluster-node04 =====
+
+# OSU MPI Bandwidth Test v7.5
+# Datatype: MPI_CHAR.
+# Size      Bandwidth (MB/s)
+1048576               117.28

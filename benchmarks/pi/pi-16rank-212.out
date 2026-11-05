@@ -1,0 +1,2 @@
+nodes=picluster-node[01-04]  ranks=16
+pi ~= 3.141295, computed in 6.4 s (1.3 s compute + 5.1 s serial) using 16 rank(s) on 4 node(s)
