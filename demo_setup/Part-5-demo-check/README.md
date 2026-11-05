@@ -1,4 +1,4 @@
-# demo_check.sh — Pre-Demo Health Check
+# Part 5: Demo Check — Pre-Demo Health Check
 
 [`demo_check.sh`](demo_check.sh) checks the whole cluster in one go before a
 demo: every node, SLURM, munge, the NFS share, the π demo files, a real test
@@ -12,10 +12,17 @@ section (resuming nodes, restarting services, remounting NFS).
 
 ## Usage
 
-Run it on **picluster-login** as `minhcluster`:
+Run it on **picluster-login** as `minhcluster`. First copy it from this folder
+to the login node's home folder (skip this if `~/demo_check.sh` is already there):
 
 ```bash
-chmod +x demo_check.sh
+cp ~/RaspberryPi_cluster/demo_setup/Part-5-demo-check/demo_check.sh ~/
+```
+
+Then make it executable, from your home folder:
+
+```bash
+cd ~ && chmod +x demo_check.sh
 ```
 
 | Command | What it does | Time |
@@ -83,7 +90,7 @@ If anything failed, each failure is listed again under the summary, followed by
 | `2` | Unknown command-line option |
 
 If `--fix` doesn't clear a failure, work through
-[Part 4 → Troubleshooting](Part-4.md#troubleshooting-a-node-shows-down-after-power-on).
+[Part 4 → Troubleshooting](../Part-4.md#troubleshooting-a-node-shows-down-after-power-on).
 
 ---
 
@@ -92,12 +99,12 @@ If `--fix` doesn't clear a failure, work through
 These are all set up by the build guide:
 
 - **Run on picluster-login**, where `sinfo`, `srun`, `sbatch` and `slurmctld` are.
-- **Passwordless SSH** to every node ([Part 1](Part-1.md), Stage 3). The script
+- **Passwordless SSH** to every node ([Part 1](../Part-1.md), Stage 3). The script
   uses `BatchMode`, so a node that asks for a password counts as unreachable.
-- **Passwordless sudo** ([Part 2](Part-2.md)) for the `--fix` actions on the
+- **Passwordless sudo** ([Part 2](../Part-2.md)) for the `--fix` actions on the
   nodes, and for `scontrol` on the login node.
-- The π demo in `/clusterfs/pi` ([Part 3](Part-3.md)) and the `led-load`
-  service on each node ([Part 4](Part-4.md)).
+- The π demo in `/clusterfs/pi` ([Part 3](../Part-3.md)) and the `led-load`
+  service on each node ([Part 4](../Part-4.md)).
 
 ---
 
@@ -120,4 +127,4 @@ To keep your results, do one of these:
   mkdir -p ~/pi_results && cp /clusterfs/pi/*.out ~/pi_results/
   ```
 - Note that the results from this cluster are already saved on GitHub in
-  [`benchmarks/pi`](../benchmarks/pi).
+  [`benchmarks/pi`](../../benchmarks/pi).
