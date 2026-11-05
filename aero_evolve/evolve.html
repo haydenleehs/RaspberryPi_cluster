@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Evolve a Wing</title>
+<style>
+:root {
+  --bg: #f0f4f9;
+  --fg: #0f172a;
+  --mut: #64748b;
+  --card: #ffffff;
+  --card-sub: #f8fafc;
+  --line: #e2e8f0;
+  --acc: #2563eb;
+  --acc-glow: rgba(37, 99, 235, 0.14);
+  --good: #10b981;
+  --good-bg: rgba(16, 185, 129, 0.12);
+  --bad: #ef4444;
+  --bad-bg: rgba(239, 68, 68, 0.12);
+  --warn: #f59e0b;
+  --warn-bg: rgba(245, 158, 11, 0.12);
+  --shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1120;
+    --fg: #f1f5f9;
+    --mut: #94a3b8;
+    --card: #151f32;
+    --card-sub: #0f172a;
+    --line: #263554;
+    --acc: #38bdf8;
+    --acc-glow: rgba(56, 189, 248, 0.16);
+    --good: #34d399;
+    --good-bg: rgba(52, 211, 153, 0.14);
+    --bad: #f87171;
+    --bad-bg: rgba(248, 113, 113, 0.14);
+    --warn: #fbbf24;
+    --warn-bg: rgba(251, 191, 36, 0.14);
+    --shadow: 0 8px 25px -4px rgba(0, 0, 0, 0.45);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1120;
+  --fg: #f1f5f9;
+  --mut: #94a3b8;
+  --card: #151f32;
+  --card-sub: #0f172a;
+  --line: #263554;
+  --acc: #38bdf8;
+  --acc-glow: rgba(56, 189, 248, 0.16);
+  --good: #34d399;
+  --good-bg: rgba(52, 211, 153, 0.14);
+  --bad: #f87171;
+  --bad-bg: rgba(248, 113, 113, 0.14);
+  --warn: #fbbf24;
+  --warn-bg: rgba(251, 191, 36, 0.14);
+  --shadow: 0 8px 25px -4px rgba(0, 0, 0, 0.45);
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+main {
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 20px 16px 32px;
+}
+header.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+h1::before {
+  content: "🧬";
+  font-size: 22px;
+}
+.sub {
+  margin: 4px 0 0;
+  color: var(--mut);
+  font-size: 14.5px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.panel-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--mut);
+  margin: 0 0 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.top {
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 16px;
+}
+@media (max-width: 740px) {
+  .top { grid-template-columns: 1fr; }
+}
+canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 10px;
+}
+#fc {
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+}
+.control-group {
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+label span {
+  color: var(--acc);
+  background: var(--acc-glow);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+input[type=range] {
+  width: 100%;
+  accent-color: var(--acc);
+  height: 6px;
+  cursor: pointer;
+  margin: 0;
+}
+.hint {
+  color: var(--mut);
+  font-size: 12.5px;
+  margin: 0;
+  line-height: 1.45;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin: 16px 0;
+}
+@media (max-width: 740px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
+.stat {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.stat::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--acc);
+  opacity: 0.7;
+}
+.stat small {
+  display: block;
+  color: var(--mut);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.stat b {
+  display: block;
+  font-size: 21px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.stat .force-sub {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--mut);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.good { color: var(--good); }
+.bad { color: var(--bad); }
+.action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 14px 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+}
+#verdict {
+  font-weight: 600;
+  margin: 0;
+  font-size: 14.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 240px;
+}
+#verdict::before {
+  content: "●";
+  color: var(--acc);
+  font-size: 18px;
+}
+.btn-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+button {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin: 0;
+  transition: transform 0.12s ease, opacity 0.15s ease, background 0.15s ease;
+}
+button#fly {
+  background: linear-gradient(135deg, var(--acc), #1d4ed8);
+  color: #fff;
+  box-shadow: 0 4px 12px var(--acc-glow);
+}
+button#reset {
+  background: var(--bad-bg);
+  color: var(--bad);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+button#sfxBtn {
+  background: var(--card-sub);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  font-size: 13.5px;
+}
+button#sfxBtn.active {
+  border-color: var(--acc);
+  color: var(--acc);
+  background: var(--acc-glow);
+}
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+button:active:not(:disabled) {
+  transform: translateY(0);
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+.sim-card {
+  padding: 12px;
+}
+#sc {
+  border: 1px solid var(--line);
+}
+.footer-note {
+  text-align: center;
+  margin-top: 12px;
+}
+#hc{background:var(--card-sub);border:1px solid var(--line)}
+#verdict[data-s="wait"]::before{color:var(--warn)}
+#verdict[data-s="done"]::before{color:var(--good)}
+.prog{height:6px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:-4px;margin-bottom:14px}
+.prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--acc),var(--good));transition:width .6s ease}
+.race{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}
+@media(max-width:740px){.race{grid-template-columns:1fr}}
+.rrow{display:grid;grid-template-columns:92px 1fr 56px;align-items:center;gap:8px;margin-bottom:8px;font-size:13px}
+.rrow small{color:var(--mut);font-weight:600}.rrow b{text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:99px;background:var(--acc);transition:width .25s ease}
+.bar i.g{background:var(--good)}
+#you{font-weight:600;font-size:14px;margin:0 0 12px}
+</style>
+</head>
+<body>
+<main>
+  <header class="hero">
+    <div>
+      <h1>Evolve a Wing</h1>
+      <p class="sub">The Pi cluster breeds thousands of wings. Each node is an island that evolves on its own and swaps its best designs with its neighbour.</p>
+    </div>
+  </header>
+
+  <section class="top">
+    <div class="card">
+      <div class="panel-title"><span>Best Wing So Far · Wind Tunnel (35 m/s)</span><span id="tg">Gen —</span></div>
+      <canvas id="fc" width="420" height="230"></canvas>
+    </div>
+    <div class="card">
+      <div class="panel-title"><span>Fitness per Generation</span><span>Island-model GA</span></div>
+      <canvas id="hc" width="420" height="230"></canvas>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="stat"><small>Generation</small><b id="sg">—</b><span class="force-sub" id="sgs">of — total</span></div>
+    <div class="stat"><small>Cluster</small><b id="sc">—</b><span class="force-sub" id="scs">MPI islands</span></div>
+    <div class="stat"><small>Best fitness</small><b id="sf">—</b><span class="force-sub">1.0 = perfect wing</span></div>
+    <div class="stat"><small>Take-off roll</small><b id="sr">—</b><span class="force-sub">400 m runway max</span></div>
+    <div class="stat"><small>Range, full tank</small><b id="sk">—</b><span class="force-sub">Cruising distance</span></div>
+  </section>
+
+  <div class="action-bar"><p id="verdict" data-s="wait">Waiting for the cluster… submit evolve.sh</p></div>
+  <div class="prog"><i id="pg"></i></div>
+
+  <div class="card">
+    <div class="panel-title"><span>Race the Cluster</span><span>Set your own wing</span></div>
+    <div class="race">
+      <div>
+        <div class="control-group"><label>Angle of attack <span id="rav"></span></label><input id="ra" type="range" min="-5" max="25" step="0.25" value="5"></div>
+        <div class="control-group"><label>Curvature (camber) <span id="rmv"></span></label><input id="rm" type="range" min="0" max="12" step="0.25" value="3"></div>
+        <div class="control-group"><label>Thickness <span id="rtv"></span></label><input id="rt" type="range" min="4" max="30" step="0.25" value="12"></div>
+      </div>
+      <div>
+        <p id="you"></p>
+        <div class="rrow"><small>You</small><div class="bar"><i id="bu"></i></div><b id="fu">—</b></div>
+        <div class="rrow"><small>Cluster best</small><div class="bar"><i id="bc" class="g"></i></div><b id="fcv">—</b></div>
+        <p class="hint">Fitness = half range, half short take-off. Same physics as the aerofoil game.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint footer-note">Simplified model: thin-aerofoil lift, parabolic drag polar, a 1,000 kg light aircraft with a 16 m² wing. It is for intuition, not for building real wings.</p>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const S=16,Wt=9810,M0=1000,K=1/(Math.PI*6*.85),RUN=400;
+const V_TUNNEL=35,Q_TUNNEL=0.5*1.225*V_TUNNEL*V_TUNNEL*S;
+function setupCanvas(id,w,h){
+  const cv=$(id),dpr=window.devicePixelRatio||1;
+  cv.width=w*dpr;cv.height=h*dpr;const x=cv.getContext('2d');x.scale(dpr,dpr);return x;
+}
+const fcCtx=setupCanvas('fc',420,230),hcCtx=setupCanvas('hc',420,230);
+
+// ---- same physics as the game and aero_evolve.py ----
+function aero(a,m,t){
+  const sl=.105*(1-.004*(t-12)),cmax=Math.max(.6,.9+.13*m+.012*(t-12)),as=cmax/sl-.9*m,st=a>as;
+  const cl=st?Math.max(.3,cmax-.09*(a-as)):sl*(a+.9*m);
+  const cd=.005+.0006*t+.0003*m+K*cl*cl+(st?.02+.012*(a-as):0)+.00002*a*a;
+  return{cl,cd,st};
+}
+function plan(a,m,t,w){
+  const{cl,cd}=aero(a,m,t);let v=0,x=0,tm=0,ok=false;
+  while(tm<40){
+    const q=.5*1.225*v*v*S,L=q*cl,D2=q*cd,acc=(2600*(1-v/100)-D2-.04*Math.max(Wt-L,0))/M0;
+    v=Math.max(0,v+acc*.05);x+=v*.05;tm+=.05;
+    if(x>RUN||(acc<=0&&v<1&&tm>1))break;
+    if(L>=Wt){ok=true;break}
+  }
+  if(!ok)return{ok,fit:-1+.9*Math.min(1,Math.max(0,cl/.8))};
+  const V=Math.sqrt(2*Wt/(S*cl)),rg=cl>.1&&V<=90?Math.round(70*cl/cd):0;
+  return{ok,dist:x,range:rg,fit:w*rg/1000+(1-w)*(RUN-x)/RUN};
+}
+function foil(m,t,n=40){
+  const p=.4,M=m/100,T=t/100,u=[],l=[];
+  for(let i=0;i<=n;i++){
+    const x=(1-Math.cos(Math.PI*i/n))/2;
+    const yt=5*T*(.2969*Math.sqrt(x)-.126*x-.3516*x*x+.2843*x**3-.1015*x**4);
+    let yc,dy;
+    if(x<p){yc=M/(p*p)*(2*p*x-x*x);dy=2*M/(p*p)*(p-x)}
+    else{yc=M/((1-p)**2)*((1-2*p)+2*p*x-x*x);dy=2*M/((1-p)**2)*(p-x)}
+    const th=Math.atan(dy);
+    u.push([x-yt*Math.sin(th),yc+yt*Math.cos(th)]);l.push([x+yt*Math.sin(th),yc-yt*Math.cos(th)]);
+  }
+  return u.concat(l.reverse());
+}
+function drawFoil(c,cx,cy,ch,a,m,t,dir,fill,stroke){
+  c.save();c.translate(cx,cy);c.scale(dir,1);c.rotate(a*Math.PI/180);
+  c.beginPath();foil(m,t).forEach((p,i)=>{const X=(p[0]-.25)*ch,Y=-p[1]*ch;i?c.lineTo(X,Y):c.moveTo(X,Y)});
+  c.closePath();c.fillStyle=fill;c.fill();
+  if(stroke){c.strokeStyle=stroke;c.lineWidth=1.8;c.stroke()}
+  c.restore();
+}
+const col=(n,f)=>{const v=getComputedStyle(document.documentElement).getPropertyValue(n).trim();return v?v:f};
+function roundRect(c,x,y,w,h,r){
+  c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();
+}
+function arrow(c,x,y,dx,dy,color){
+  c.save();c.strokeStyle=color;c.fillStyle=color;c.lineWidth=3.2;c.lineCap="round";
+  c.beginPath();c.moveTo(x,y);c.lineTo(x+dx,y+dy);c.stroke();
+  const an=Math.atan2(dy,dx);c.beginPath();c.moveTo(x+dx,y+dy);
+  c.lineTo(x+dx-10*Math.cos(an-.42),y+dy-10*Math.sin(an-.42));
+  c.lineTo(x+dx-10*Math.cos(an+.42),y+dy-10*Math.sin(an+.42));c.closePath();c.fill();c.restore();
+}
+function badgeLabel(c,text,x,y,textColor){
+  c.save();c.font="700 11.5px system-ui";
+  const padX=6,h=19,w=c.measureText(text).width+padX*2;
+  const bx=Math.max(4,Math.min(416-w,x)),by=Math.max(4,Math.min(226-h,y));
+  c.fillStyle="rgba(15, 23, 42, 0.84)";roundRect(c,bx,by,w,h,5);c.fill();
+  c.strokeStyle=textColor;c.lineWidth=1;c.stroke();
+  c.fillStyle=textColor;c.fillText(text,bx+padX,by+13.5);c.restore();
+}
+
+// ---- wind tunnel showing the cluster's current best wing (morphs smoothly) ----
+let J=null,D={a:2,m:1,t:22};
+function drawTunnel(clk){
+  const{a,m,t}=D,A=aero(a,m,t),c=fcCtx;
+  const liftN=Math.round(Q_TUNNEL*A.cl),dragN=Math.round(Q_TUNNEL*A.cd);
+  c.clearRect(0,0,420,230);
+  c.strokeStyle=col('--line','#e2e8f0');c.lineWidth=0.6;
+  for(let gx=30;gx<420;gx+=30){c.beginPath();c.moveTo(gx,0);c.lineTo(gx,230);c.stroke()}
+  for(let gy=25;gy<230;gy+=30){c.beginPath();c.moveTo(0,gy);c.lineTo(420,gy);c.stroke()}
+  const streamY=(x,baseY,isTop)=>{
+    const dx=(x-200)/135;let dy=0;
+    if(Math.abs(dx)<1.25){dy=-Math.cos(dx*Math.PI/2.5)*(a*0.9+m*1.4)*(isTop?1.15:0.55)}
+    if(A.st&&isTop&&dx>-0.1)dy+=Math.sin(x*0.22-clk*9+baseY)*9*Math.min(1.4,dx+0.2);
+    return baseY+dy;
+  };
+  for(let y=34;y<=204;y+=28){
+    const isTop=y<118,stalled=A.st&&isTop;
+    c.strokeStyle=stalled?col('--bad','#ef4444'):col('--mut','#64748b');
+    c.globalAlpha=stalled?0.35:0.22;c.lineWidth=1.2;c.beginPath();
+    for(let x=8;x<=412;x+=6){const py=streamY(x,y,isTop);x===8?c.moveTo(x,py):c.lineTo(x,py)}
+    c.stroke();
+    c.save();c.strokeStyle=stalled?col('--bad','#ef4444'):col('--acc','#38bdf8');
+    c.globalAlpha=stalled?0.85:0.65;c.lineWidth=2;c.lineCap="round";c.setLineDash([10,26]);
+    c.lineDashOffset=-(clk*(isTop?(A.st?65:135+Math.max(0,A.cl*30)):95)+y*3);
+    c.beginPath();
+    for(let x=8;x<=412;x+=6){const py=streamY(x,y,isTop);x===8?c.moveTo(x,py):c.lineTo(x,py)}
+    c.stroke();c.restore();
+  }
+  c.globalAlpha=1;
+  arrow(c,14,18,36,0,col('--mut','#64748b'));
+  c.fillStyle=col('--mut','#64748b');c.font="600 11px system-ui";c.fillText("AIRFLOW (35 m/s)",56,22);
+  if(A.st){c.fillStyle=col('--bad','#ef4444');c.font="700 11px system-ui";c.fillText("⚠ STALL WAKE",320,22)}
+  const g=c.createLinearGradient(120,70,280,165);
+  g.addColorStop(0,A.st?col('--bad','#ef4444'):col('--acc','#2563eb'));g.addColorStop(1,A.st?"#991b1b":"#1d4ed8");
+  drawFoil(c,200,118,290,a,m,t,1,g,col('--fg','#0f172a'));
+  c.fillStyle=col('--fg','#0f172a');c.beginPath();c.arc(200,118,4,0,Math.PI*2);c.fill();
+  const liftPx=Math.max(-60,Math.min(90,A.cl*55)),dragPx=Math.min(120,A.cd*900);
+  arrow(c,200,118,0,-liftPx,col('--good','#10b981'));arrow(c,200,118,dragPx,0,col('--bad','#ef4444'));
+  badgeLabel(c,"LIFT: "+liftN.toLocaleString()+" N",208,118-liftPx-12,col('--good','#10b981'));
+  badgeLabel(c,"DRAG: "+dragN.toLocaleString()+" N",206+dragPx,108,col('--bad','#ef4444'));
+  c.fillStyle=col('--mut','#64748b');c.font="600 11px system-ui";
+  c.fillText("angle "+a.toFixed(1)+"°  ·  camber "+m.toFixed(1)+"%  ·  thickness "+t.toFixed(1)+"%",14,222);
+}
+function frame(now){
+  if(J)for(const k of['a','m','t'])D[k]+=(J.best[k]-D[k])*.15;
+  drawTunnel(now/1000);requestAnimationFrame(frame);
+}
+
+// ---- fitness history chart ----
+function drawHist(){
+  const c=hcCtx,L=42,R=408,T=30,B=192;c.clearRect(0,0,420,230);
+  c.font="600 10.5px system-ui";c.fillStyle=col('--mut','#64748b');
+  if(!J||!J.best_hist.length){c.fillText("Waiting for generation 1…",L,110);return}
+  const b=J.best_hist,mn=J.mean_hist,all=b.concat(mn),N=Math.max(J.gens,2);
+  let lo=Math.min(...all),hi=Math.max(...all);if(hi-lo<.05){hi=lo+.05}
+  const pad=(hi-lo)*.08;lo-=pad;hi+=pad;
+  const X=i=>L+i/(N-1)*(R-L),Y=v=>B-(v-lo)/(hi-lo)*(B-T);
+  c.strokeStyle=col('--line','#e2e8f0');c.lineWidth=.8;
+  for(let i=0;i<=3;i++){const v=lo+(hi-lo)*i/3,y=Y(v);c.beginPath();c.moveTo(L,y);c.lineTo(R,y);c.stroke();c.fillText(v.toFixed(2),4,y+3)}
+  c.fillText("gen 1",L,212);c.textAlign="right";c.fillText("gen "+J.gens,R,212);c.textAlign="left";
+  c.beginPath();b.forEach((v,i)=>i?c.lineTo(X(i),Y(v)):c.moveTo(X(i),Y(v)));
+  c.lineTo(X(b.length-1),B);c.lineTo(X(0),B);c.closePath();c.fillStyle=col('--acc-glow','rgba(56,189,248,.16)');c.fill();
+  [[mn,col('--mut','#64748b'),1.8],[b,col('--good','#10b981'),2.8]].forEach(([d,k,w])=>{
+    c.strokeStyle=k;c.lineWidth=w;c.lineJoin="round";c.beginPath();
+    d.forEach((v,i)=>i?c.lineTo(X(i),Y(v)):c.moveTo(X(i),Y(v)));c.stroke();
+  });
+  const i=b.length-1;c.fillStyle=col('--good','#10b981');c.beginPath();c.arc(X(i),Y(b[i]),4.5,0,7);c.fill();
+  c.fillStyle=col('--good','#10b981');c.fillText("● best",300,18);c.fillStyle=col('--mut','#64748b');c.fillText("● average",352,18);
+}
+
+// ---- live data from the cluster ----
+function show(j){
+  J=j;const b=j.best,done=j.done;
+  $('tg').textContent="Gen "+j.gen;
+  $('sg').textContent=j.gen;$('sgs').textContent="of "+j.gens+" total";
+  $('sc').textContent=j.ranks+" ranks";$('scs').textContent=j.nodes+" node"+(j.nodes>1?"s":"")+" · MPI islands";
+  $('sf').textContent=b.fit.toFixed(3);
+  $('sr').innerHTML=b.dist==null?'<span class="bad">No lift-off</span>':'<span class="good">'+b.dist.toFixed(0)+" m</span>";
+  $('sk').textContent=b.range==null?"—":b.range+" km";
+  const v=$('verdict');v.dataset.s=done?"done":"run";
+  v.textContent=done?"Done: "+j.gens+" generations on "+j.ranks+" rank(s) in "+j.wall.toFixed(1)+" s. Try to beat the best wing below.":"Evolving across "+j.ranks+" islands on "+j.nodes+" node"+(j.nodes>1?"s":"")+"…";
+  $('pg').style.width=(100*j.gen/j.gens)+"%";
+  drawHist();race();
+}
+function poll(){
+  fetch("best.json?"+Date.now(),{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(show)
+    .catch(()=>{if(!J){const v=$('verdict');v.dataset.s="wait";v.textContent="Waiting for the cluster… submit evolve.sh"}});
+}
+
+// ---- race the cluster ----
+function race(){
+  const a=+$('ra').value,m=+$('rm').value,t=+$('rt').value;
+  $('rav').textContent=a+"°";$('rmv').textContent=m+"% chord";$('rtv').textContent=t+"% chord";
+  const r=plan(a,m,t,J?J.w:.5),cf=J?J.best.fit:null;
+  let msg=r.ok?"Your wing: "+r.dist.toFixed(0)+" m roll, "+r.range+" km range.":"Your wing can’t take off.";
+  if(cf!=null&&r.ok)msg+=r.fit>=cf?" You beat the cluster!":" That is "+Math.round(100*r.fit/cf)+"% of the cluster’s best.";
+  $('you').textContent=msg;
+  const mx=Math.max(.0001,r.fit,cf==null?0:cf);
+  $('bu').style.width=(100*Math.max(0,r.fit)/mx)+"%";$('fu').textContent=r.fit.toFixed(3);
+  $('bc').style.width=cf==null?"0%":(100*Math.max(0,cf)/mx)+"%";$('fcv').textContent=cf==null?"—":cf.toFixed(3);
+}
+['ra','rm','rt'].forEach(i=>$(i).addEventListener('input',race));
+race();drawHist();requestAnimationFrame(frame);poll();setInterval(poll,1000);
+</script>
+</body>
+</html>
