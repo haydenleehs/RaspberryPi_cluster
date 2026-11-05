@@ -6,6 +6,7 @@ to show parallel speedup, with a per-node 8×8 LED load display.
 ## Conventions
 - Login user: `minhcluster` on every node.
 - LAN `10.0.0.0/24`: `picluster-login`=.1, `picluster-node01`=.2, `node02`=.3, `node03`=.4, `node04`=.5.
+- All five Pis are connected to one **Ethernet switch**, which forms the cluster LAN.
 - Files are created and edited with **vim**. When a step says `vim <file>`:
   1. Run the command to open the file.
   2. Type `:set paste` and press Enter, so pasted code keeps its indentation
@@ -93,6 +94,10 @@ ssh minhcluster@picluster-login.local
 ---
 
 ## Stage 2: Login node shares internet to the cluster
+
+Connect the Pis to the switch: plug the Ethernet port of the login node and of
+each of the four compute nodes into the switch. The login node shares its
+eduroam Wi-Fi connection with the rest of the cluster over this switch.
 
 On picluster-login:
 
