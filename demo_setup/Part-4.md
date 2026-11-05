@@ -38,6 +38,22 @@ for h in $NODES; do ssh $h "ls /dev/spidev0.0"; done   # one line per node
 
 ### 3. The display program
 
+> 📁 **The LED files are in this repo at [`demo_setup/led`](led):**
+> [`led_load.py`](led/led_load.py) and [`led-load.service`](led/led-load.service).
+> You can copy them to `/clusterfs/led/` instead of typing them in.
+>
+> The `led_load.py` in that folder is a **newer version** than the one below.
+> When the cluster is idle, each matrix shows a letter so the four boards spell
+> **NSCC**, with a breathing glow, a shimmer sweep across the letters, and a
+> wipe animation when switching between the letter and the load bars. When a
+> job runs, the boards switch to the per-core load bars. The program below is
+> the simpler bars-only version.
+>
+> If you use the newer version, check these settings at the top of the file:
+> - `LETTER_FOR`: which letter each node shows.
+> - `POSITION`: the left-to-right order of the boards.
+> - `ROTATE`: set to `2` for this build's mounting.
+
 Write it once on the login node, in the shared directory:
 
 ```bash
