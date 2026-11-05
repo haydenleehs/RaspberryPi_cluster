@@ -1,0 +1,10 @@
+[Unit]
+Description=MAX7219 CPU load bars
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/bin/led_load.py
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
