@@ -13,6 +13,9 @@ Follow the parts in order:
 | [Part 3](Part-3.md) | 6–8 | Share `/clusterfs` over NFS, then run the Monte Carlo π demo (code in [`benchmarks/pi`](../benchmarks/pi)) |
 | [Part 4](Part-4.md) | 9 | Wire up and run the per-node MAX7219 LED load bars (code in [`led`](led)), plus troubleshooting for a node that shows DOWN |
 
+Before a demo, run [`demo_check.sh`](demo_check.sh) on the login node to check
+the whole cluster in one go. See [demo_check.md](demo_check.md) for how to use it.
+
 Files are created with **vim** throughout; Part 1's *Conventions* section
 explains the steps.
 
