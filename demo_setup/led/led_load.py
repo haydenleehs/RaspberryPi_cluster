@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Four vertical bars on a MAX7219 8x8 matrix, one bar per CPU core.
+"""MAX7219 8x8 display per node: an NSCC letter when idle, CPU load bars when busy.
+
+Under load it shows four vertical bars, one bar per CPU core.
 
 Each core owns two columns. Bar height tracks that core's utilisation
 over the last sampling interval, read from /proc/stat. Readings are
