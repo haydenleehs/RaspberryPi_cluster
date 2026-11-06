@@ -60,6 +60,10 @@ The 1-node runs also logged the CPU temperature and clock every 2 s
 
 The results reflect full-speed CPUs.
 
+The earlier 2-node (job 31) and 4-node (job 32) runs were made before their
+scripts had monitoring, so they have no temperature logs. All three scripts now
+start the logger (see [Monitoring temperature, clock and throttling](#monitoring-temperature-clock-and-throttling)).
+
 ---
 
 ## Files
@@ -71,6 +75,7 @@ hpl/
 │   ├── Make.rpi           build config for the Pi (mpicc, -O3 -mcpu=native, OpenBLAS)
 │   └── bin/rpi/xhpl       the compiled benchmark
 ├── templog.sh             temperature / clock / throttle logger (every 2 s)
+├── hpl_thermal_summary.py summarises a run's GFLOPS with its temperature / clock / throttle logs
 ├── hpl_1node/             1 node,  4 ranks: HPL.dat, hpl-1node.sh, outputs, monitor logs
 ├── hpl_2node/             2 nodes, 8 ranks: HPL.dat, hpl-2node.sh, output
 └── hpl_4node/             4 nodes, 16 ranks: HPL.dat, hpl-4node.sh, output
@@ -124,6 +129,18 @@ The 4-node run takes about **11–12 minutes**. Check the result:
 grep -A2 "^T/V" /clusterfs/hpl/hpl_4node/hpl-4node-<jobid>.out
 ```
 
+### Run 1, 2 and 4 nodes in one go
+
+This submits all three runs; each waits for the previous one to finish
+(about 25 minutes in total):
+
+```bash
+cd /clusterfs/hpl && j1=$(sbatch --parsable hpl_1node/hpl-1node.sh) && j2=$(sbatch --parsable --dependency=afterany:$j1 hpl_2node/hpl-2node.sh) && j3=$(sbatch --parsable --dependency=afterany:$j2 hpl_4node/hpl-4node.sh) && echo "jobs: $j1 $j2 $j3"
+```
+
+Because they run back to back, the 2-node and 4-node runs start on warm Pis.
+Submit them one at a time, a few minutes apart, if you want each to start cool.
+
 ### Choosing N in `HPL.dat`
 
 Use about 75–80 % of the total RAM across the nodes in the run:
@@ -137,10 +154,68 @@ and as square as possible.
 
 ---
 
+## Monitoring temperature, clock and throttling
+
+All three scripts (`hpl-1node.sh`, `hpl-2node.sh`, `hpl-4node.sh`) record how
+hot the Pis get and whether they slow down during HPL:
+
+- Before HPL starts, the script launches [`templog.sh`](templog.sh) on **every
+  node in the job** (with `srun --overlap`). Every 2 seconds it records the CPU
+  temperature, the clock speed, and the throttle status from
+  `vcgencmd get_throttled`.
+- Each node writes its own `monitor_<node>_<jobid>.log` into the run folder:
+  1 log for a 1-node run, 2 for 2 nodes, 4 for 4 nodes.
+- The script waits 10 s before and after HPL, so the logs show the idle
+  temperature and the cool-down too. The loggers stop when the job ends.
+
+Example log lines:
+
+```
+time host temp_C scaling_MHz arm_clock_MHz throttled
+16:08:47 picluster-node01 32.1 1800 1800 0x0
+16:08:49 picluster-node01 32.6 1800 1800 0x0
+```
+
+### Summarising a run
+
+[`hpl_thermal_summary.py`](hpl_thermal_summary.py) puts each run's GFLOPS
+together with its logs. For every node it shows the temperature before the
+run, the peak and average temperature and clock speed **during the HPL solve**,
+and any throttle flags in plain English:
+
+```bash
+cd /clusterfs/hpl && python3 hpl_thermal_summary.py hpl_1node/hpl-1node-<j1>.out hpl_2node/hpl-2node-<j2>.out hpl_4node/hpl-4node-<j3>.out
+```
+
+With no arguments, it summarises every run in `/clusterfs/hpl/hpl_*node/`.
+Real output for 1-node job 35:
+
+```
+hpl-1node-35.out   job 35   picluster-node01   4 ranks
+  N=19584  NB=96  P×Q=1×4  time=303.5 s  -> 16.50 GFLOPS  [PASSED]
+  solve window: 12:03:09 -> 12:08:13
+  node                before    peak     avg   avg clk   min clk  throttle
+  picluster-node01     33.1C   68.2C   64.8C   1800 MHz  1800 MHz  none (0x0)
+  verdict: no throttling: CPUs ran at full speed
+```
+
+| Column | Meaning |
+|---|---|
+| `before` | Temperature when logging started, before HPL ran |
+| `peak` / `avg` | Hottest and average temperature during the solve |
+| `avg clk` / `min clk` | CPU clock during the solve; 1,800 MHz is full speed |
+| `throttle` | `none (0x0)` is good; otherwise the raw code and what it means (under-voltage, frequency capped, throttled, soft temperature limit) |
+
+If any node throttles, the verdict says so. HPL can only run as fast as its
+slowest node, so one hot Pi lowers the whole result.
+
+---
+
 ## Notes
 
-- `hpl-1node.sh` also starts `templog.sh` on each node during the run, which
-  needs `vcgencmd` (part of Raspberry Pi OS).
+- The monitoring needs `vcgencmd` (part of Raspberry Pi OS) on every compute
+  node. Check with
+  `ssh picluster-node01 "vcgencmd measure_temp; vcgencmd get_throttled"`.
 - `hpl-1node-34.out` starts with a `Permission denied, please try again.`
   line. That's an SSH login message from that run; the benchmark itself
   completed and passed.
